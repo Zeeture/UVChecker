@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UV Checker Generator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="eyebrow">UV TEXTURE GENERATOR</div>
+      <h1>UV Checker Generator</h1>
+      <p>正方形棋盘格 · 高级编号 · PNG 导出</p>
+    </div>
+    <button id="exportBtn" class="primary">导出 PNG</button>
+  </header>
+
+  <main class="layout">
+    <section class="previewPanel panel">
+      <div class="panelTitle">
+        <h2>实时预览</h2>
+        <span id="previewSize">2048 × 2048</span>
+      </div>
+      <div class="previewArea"><canvas id="canvas" width="2048" height="2048"></canvas></div>
+      <div class="stats">
+        <div><b id="statResolution">2048 × 2048</b><span>输出分辨率</span></div>
+        <div><b id="statGrid">8 × 8</b><span>列 × 行</span></div>
+        <div><b id="statCount">64</b><span>格子总数</span></div>
+      </div>
+      <p class="hint">格子使用统一像素边长绘制，宽高不同时自动留白；“裁切模式”会让棋盘格最大化并裁切超出区域。</p>
+    </section>
+
+    <aside class="controls">
+      <section class="panel">
+        <h2>输出与棋盘格</h2>
+        <div class="two">
+          <label>宽度（px）<input id="width" type="number" min="1" max="16384" value="2048"></label>
+          <label>高度（px）<input id="height" type="number" min="1" max="16384" value="2048"></label>
+        </div>
+        <div class="quick"><button data-size="1024">1024²</button><button data-size="2048">2048²</button><button data-size="4096">4096²</button></div>
+        <div class="two">
+          <label>列数<input id="cols" type="number" min="1" max="512" value="8"></label>
+          <label>行数<input id="rows" type="number" min="1" max="512" value="8"></label>
+        </div>
+        <label>正方形格子模式<select id="squareMode"><option value="fit">自动适配，保持正方形</option><option value="crop">最大化格子，裁切超出区域</option></select></label>
+        <div class="colorLine"><label>颜色 A<input id="colorA" type="color" value="#FFFFFF"></label><label>颜色 B<input id="colorB" type="color" value="#202020"></label></div>
+        <label>UV 方向<select id="flip"><option value="none">默认</option><option value="vertical">垂直翻转 V</option><option value="horizontal">水平翻转 U</option><option value="both">水平 + 垂直</option></select></label>
+      </section>
+
+      <section class="panel">
+        <h2>编号系统</h2>
+        <label>编号模式<select id="numberMode">
+          <option value="continuous">连续编号</option>
+          <option value="rc">行列编号（R01C02）</option>
+          <option value="uv">UV 坐标（U0.00 V0.00）</option>
+          <option value="custom">自定义格式</option>
+        </select></label>
+        <div class="two">
+          <label>起始值<input id="start" type="number" value="1"></label>
+          <label>补零位数<select id="padding"><option value="0">不补零</option><option value="2">2 位</option><option value="3">3 位</option><option value="4">4 位</option><option value="5">5 位</option></select></label>
+        </div>
+        <label>编号前缀<input id="prefix" type="text" placeholder="例如 UV_"></label>
+        <label>自定义格式<input id="format" type="text" value="{row}_{col}" placeholder="{index} / {row} / {col} / {u} / {v}"></label>
+        <p class="hint">自定义格式支持：{index}、{row}、{col}、{u}、{v}。例如 Tile_{row}_{col} 或 UV_{u}_{v}。</p>
+        <label>编号顺序<select id="order"><option value="ltr">左 → 右、上 → 下</option><option value="rtl">右 → 左、上 → 下</option><option value="ttb">上 → 下、左 → 右</option><option value="btt">下 → 上、左 → 右</option></select></label>
+        <label>V 坐标方向<select id="vOrigin"><option value="top">顶部为 V0</option><option value="bottom">底部为 V0</option></select></label>
+        <div class="two">
+          <label>字体大小（格子比例）<input id="fontSize" type="number" min="5" max="60" value="20"></label>
+          <label>编号位置<select id="position"><option value="center">中心</option><option value="tl">左上</option><option value="tr">右上</option><option value="bl">左下</option><option value="br">右下</option></select></label>
+        </div>
+        <div class="colorLine"><label>文字颜色<input id="textColor" type="color" value="#FF0000"></label><label>描边颜色<input id="outlineColor" type="color" value="#FFFFFF"></label></div>
+        <label class="check"><input id="showNumbers" type="checkbox" checked>显示编号</label>
+        <label class="check"><input id="showOutline" type="checkbox" checked>显示文字描边</label>
+      </section>
+
+      <section class="panel">
+        <h2>UV 辅助显示</h2>
+        <label class="check"><input id="showGrid" type="checkbox">显示格子边界线</label>
+        <label class="check"><input id="showAxis" type="checkbox" checked>显示 UV 边界与方向标签</label>
+        <label class="check"><input id="showRowCol" type="checkbox">显示行列标签</label>
+        <label>边界线颜色<input id="gridColor" type="color" value="#808080"></label>
+        <label>边界线宽度<input id="gridWidth" type="number" min="1" max="20" value="2"></label>
+        <button id="resetBtn" class="full">恢复默认</button>
+      </section>
+    </aside>
+  </main>
+  <div id="status" class="status">修改参数后会自动更新预览。</div>
+</div>
+<script src="renderer.js"></script>
+</body>
+</html>
